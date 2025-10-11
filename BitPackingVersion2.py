@@ -67,8 +67,7 @@ class BitPackingVersion2:
 
             values_per_word = 32 // self.k
             mask = (1 << self.k) - 1
-            #output = [0] * self.n
-
+            
             for i in range(self.n):
                 word_idx = i // values_per_word
                 pos_in_word = i % values_per_word
@@ -112,3 +111,18 @@ class BitPackingVersion2:
     def getAccessTime(self):
         return self.accessTime
 
+    def calculate_latency_threshold(self):
+        if self.n == 0 or self.k == 0:
+            return None
+        
+        S_u = self.n * 4  # bytes, uncompressed
+        S_c = len(self.compressed) * 4  # bytes, compressed
+        if S_c >= S_u:
+            return None  # Compression not beneficial
+        
+        # Convert times from ms strings to seconds floats
+        time_c = float(self.compressionTime) / 1000
+        time_d = float(self.decompressionTime) / 1000
+        
+        t_threshold = (time_c + time_d) / (S_u - S_c)
+        return t_threshold

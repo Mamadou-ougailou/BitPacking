@@ -9,5 +9,6 @@ class BitPacking:
             "Version1": BitPackingVersion1,
             "Version2": BitPackingVersion2
         }
-
+        if type not in versions:
+            raise KeyError(f"Type inconnu : {type}. Types valides : {list(versions.keys())}")
         return versions[type]()
