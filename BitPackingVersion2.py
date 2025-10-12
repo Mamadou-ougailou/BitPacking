@@ -2,27 +2,23 @@ import math
 import time
 
 class BitPackingVersion2:
-    
     def __init__(self):
-        self.n = 0
-        self.k = 0
-        self.compressed = []
-        self.compressionTime = 0
-        self.decompressionTime = 0
-        self.accessTime = 0
-        
+        self.n = 0  
+        self.k = 0  
+        self.compressed = []  
+        self.compressionTime = "0.0000"
+        self.decompressionTime = "0.0000"
+        self.accessTime = "0.0000"
 
     def compress(self, arr):
+        """Compresse un tableau d'entiers avec alignement sur mots."""
         start_time = time.perf_counter()
-
-        if(arr != [] and max(arr)!=0):
+        if arr and max(abs(v) for v in arr) != 0:
             self.n = len(arr)
-            max_val = max(arr)
+            max_val = max(abs(v) for v in arr)
             self.k = max(1, math.ceil(math.log2(max_val + 1)))
-
             if self.k > 32:
-                raise ValueError(f"k = {self.k} > 32 : impossible de stocker un entier compressé entièrement "
-                                "dans un mot de 32 bits sans le découper.")
+                raise ValueError("Bit width k > 32 not supported")
 
             values_per_word = 32 // self.k 
             out_size = math.ceil(self.n / values_per_word)
@@ -50,41 +46,42 @@ class BitPackingVersion2:
                     word_idx += 1
                     used_bits_in_word = 0
             
-            total_time = time.perf_counter() - start_time
-            self.compressionTime = format(total_time * 1000, '.4f')
+            self.compressionTime = format((time.perf_counter() - start_time) * 1000, '.4f')
         else:
             self.n = 0
             self.k = 0
             self.compressionTime = "0.0000"
             self.compressed = []
-
         return self.compressed
 
     def decompress(self, output):
+        """Décompresse dans le tableau output (pré-alloué de taille n)."""
         start_time = time.perf_counter()
-
-        if self.n != 0 and self.k != 0 and len(output) >= self.n:
+        if self.n != 0 and self.k != 0:
+            if len(output) < self.n:
+                raise ValueError("Output array too small")
 
             values_per_word = 32 // self.k
             mask = (1 << self.k) - 1
-            
+
             for i in range(self.n):
                 word_idx = i // values_per_word
                 pos_in_word = i % values_per_word
                 bits_left = 32 - pos_in_word * self.k
                 shift = bits_left - self.k
                 output[i] = (self.compressed[word_idx] >> shift) & mask
-
-            total_time = time.perf_counter() - start_time
-            self.decompressionTime = format(total_time * 1000, '.4f')
+                if output[i] & (1 << (self.k - 1)):
+                    output[i] -= (1 << self.k)
+            self.decompressionTime = format((time.perf_counter() - start_time) * 1000, '.4f')
         else:
             output = []
             self.decompressionTime = "0.0000"
         return output
 
     def get(self, i):
+        """Accès aléatoire à l'élément i."""
         start_time = time.perf_counter()
-        if i >= 0 and i < self.n :
+        if 0 <= i < self.n:
             values_per_word = 32 // self.k
             mask = (1 << self.k) - 1
 
@@ -93,14 +90,13 @@ class BitPackingVersion2:
             bits_left = 32 - pos_in_word * self.k
             shift = bits_left - self.k
             number = (self.compressed[word_idx] >> shift) & mask
-
-            total_time = time.perf_counter() - start_time
-            self.accessTime = format(total_time * 1000, '.4f')
+            if number & (1 << (self.k - 1)):
+                number -= (1 << self.k)
+            self.accessTime = format((time.perf_counter() - start_time) * 1000, '.4f')
             return number
         else:
             self.accessTime = "0.0000"
             raise IndexError("Index out of bounds")
-        
 
     def getCompressionTime(self):
         return self.compressionTime
@@ -110,7 +106,7 @@ class BitPackingVersion2:
 
     def getAccessTime(self):
         return self.accessTime
-
+    
     def calculate_latency_threshold(self):
         if self.n == 0 or self.k == 0:
             return None

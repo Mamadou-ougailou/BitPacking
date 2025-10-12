@@ -20,5 +20,5 @@ def run_with_averaging(bp, array, runs=5):
 
     return compresed_array, decompressed_array, avg_compression_time, avg_decompression_time
 
-def generate_input(size, max_val):
-    return [random.randint(0, max_val) for _ in range(size)]
+def generate_input(size, min_val, max_val):
+    return [random.randint(min_val, max_val) for _ in range(size)]

@@ -11,12 +11,11 @@ class BitPackingVersion1:
         self.accessTime = "0.0000"
 
     def compress(self, arr):
-        """Compresse un tableau d'entiers en utilisant un packing serré."""
         start_time = time.perf_counter()
-        if arr and max(arr) != 0:
+        if arr and max(abs(v) for v in arr) != 0:
             self.n = len(arr)
-            max_val = max(arr)
-            self.k = max(1, math.ceil(math.log2(max_val + 1)))
+            max_val = max(abs(v) for v in arr)
+            self.k = max(1, math.ceil(math.log2(max_val + 1)) + 1)
             if self.k > 32:
                 raise ValueError("Bit width k > 32 not supported")
 
@@ -63,6 +62,8 @@ class BitPackingVersion1:
 
                 if bits_left >= self.k:
                     output[i] = (self.compressed[start_idx] >> (bits_left - self.k)) & ((1 << self.k) - 1)
+                    if output[i] & (1 << (self.k - 1)):
+                        output[i] -= (1 << self.k)
                 else:
                     high_bits = (self.compressed[start_idx] & ((1 << bits_left) - 1)) << (self.k - bits_left)
                     low_bits = 0
@@ -70,6 +71,8 @@ class BitPackingVersion1:
                         low_bits = self.compressed[start_idx + 1] >> (32 - (self.k - bits_left))
                         low_bits &= (1 << (self.k - bits_left)) - 1
                     output[i] = high_bits | low_bits
+                    if output[i] & (1 << (self.k - 1)):
+                        output[i] -= (1 << self.k)
                 bit_pos += self.k
             self.decompressionTime = format((time.perf_counter() - start_time) * 1000, '.4f')
         else:
@@ -88,6 +91,8 @@ class BitPackingVersion1:
 
             if bits_left >= self.k:
                 number = (self.compressed[start_idx] >> (bits_left - self.k)) & ((1 << self.k) - 1)
+                if number & (1 << (self.k - 1)):
+                    number -= (1 << self.k)
             else:
                 high_bits = (self.compressed[start_idx] & ((1 << bits_left) - 1)) << (self.k - bits_left)
                 low_bits = 0
@@ -95,6 +100,8 @@ class BitPackingVersion1:
                     low_bits = self.compressed[start_idx + 1] >> (32 - (self.k - bits_left))
                     low_bits &= (1 << (self.k - bits_left)) - 1
                 number = high_bits | low_bits
+                if number & (1 << (self.k - 1)):
+                    number -= (1 << self.k)
             self.accessTime = format((time.perf_counter() - start_time) * 1000, '.4f')
             return number
         else:
