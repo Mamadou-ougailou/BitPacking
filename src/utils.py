@@ -1,5 +1,9 @@
 import random
 import statistics
+from src.versions.bit_packing_verion1 import BitPackingVersion1
+from src.versions.bit_packing_version2 import BitPackingVersion2
+from src.versions.bit_packing_overflow import BitPackingOverflow
+
 
 def run_with_averaging(bp, array, runs=5):
     compression_times = []

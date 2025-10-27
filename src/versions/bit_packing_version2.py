@@ -1,14 +1,10 @@
-import math
 import time
+import math
+from src.bit_packer import BitPacker
 
-class BitPackingVersion2:
+class BitPackingVersion2(BitPacker):
     def __init__(self):
-        self.n = 0  
-        self.k = 0  
-        self.compressed = []  
-        self.compressionTime = "0.0000"
-        self.decompressionTime = "0.0000"
-        self.accessTime = "0.0000"
+        super().__init__()
 
     def compress(self, arr):
         """Compresse un tableau d'entiers avec alignement sur mots."""
@@ -16,7 +12,8 @@ class BitPackingVersion2:
         if arr and max(abs(v) for v in arr) != 0:
             self.n = len(arr)
             max_val = max(abs(v) for v in arr)
-            self.k = max(1, math.ceil(math.log2(max_val + 1)))
+            # include sign bit like Version1 so negative numbers are represented
+            self.k = max(1, math.ceil(math.log2(max_val + 1)) + 1)
             if self.k > 32:
                 raise ValueError("Bit width k > 32 not supported")
 
@@ -98,27 +95,4 @@ class BitPackingVersion2:
             self.accessTime = "0.0000"
             raise IndexError("Index out of bounds")
 
-    def getCompressionTime(self):
-        return self.compressionTime
-
-    def getDecompressionTime(self):
-        return self.decompressionTime
-
-    def getAccessTime(self):
-        return self.accessTime
-    
-    def calculate_latency_threshold(self):
-        if self.n == 0 or self.k == 0:
-            return None
-        
-        S_u = self.n * 4  # bytes, uncompressed
-        S_c = len(self.compressed) * 4  # bytes, compressed
-        if S_c >= S_u:
-            return None  # Compression not beneficial
-        
-        # Convert times from ms strings to seconds floats
-        time_c = float(self.compressionTime) / 1000
-        time_d = float(self.decompressionTime) / 1000
-        
-        t_threshold = (time_c + time_d) / (S_u - S_c)
-        return t_threshold
+  

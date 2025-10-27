@@ -1,53 +1,110 @@
-from BitPacking import BitPacking
-from Utils import generate_input, run_with_averaging
-from BitPackingOverflow import BitPackingOverflow
+import sys
+import random
+from src.bit_packing_factory import BitPackingFactory
+
+def print_menu():
+    print("\n--- Bit Packing Project Menu ---")
+    print("1. Compress an array")
+    print("2. Decompress the current compressed array")
+    print("3. Get a value at index from compressed array")
+    print("4. View compression/decompression times")
+    print("5. Calculate latency threshold")
+    print("6. Generate random array")
+    print("7. Switch version")
+    print("8. Exit")
+    print("--------------------------------")
+
+def main():
+    version_types = {
+        "1": "Version1",
+        "2": "Version2",
+        "3": "Overflow"
+    }
+    current_type = "Version1"
+    bp = BitPackingFactory().create(current_type)
+    
+    arr = None
+    compressed = None
+    output = None
+    
+    while True:
+        print_menu()
+        choice = input("Enter your choice (1-8): ").strip()
+        
+        if choice == "1":
+            if arr is None:
+                print("No array loaded. Generate one first (option 6).")
+                continue
+            compressed = bp.compress(arr)
+            print(f"Compressed array: {compressed}")
+            print(f"Compression time: {bp.getCompressionTime()} ms")
+        
+        elif choice == "2":
+            if compressed is None:
+                print("Compress an array first (option 1).")
+                continue
+            size = len(arr) if arr else 0
+            output = [0] * size
+            decompressed = bp.decompress(output)
+            print(f"Decompressed array: {decompressed}")
+            print(f"Decompression time: {bp.getDecompressionTime()} ms")
+        
+        elif choice == "3":
+            if compressed is None:
+                print("Compress an array first (option 1).")
+                continue
+            try:
+                i = int(input("Enter index: "))
+                val = bp.get(i)
+                print(f"Value at index {i}: {val}")
+                print(f"Access time: {bp.getAccessTime()} ms")
+            except ValueError:
+                print("Invalid index.")
+            except IndexError as e:
+                print(e)
+        
+        elif choice == "4":
+            print(f"Compression time: {bp.getCompressionTime()} ms")
+            print(f"Decompression time: {bp.getDecompressionTime()} ms")
+        
+        elif choice == "5":
+            t = bp.calculate_latency_threshold()
+            if t is not None:
+                print(f"Latency threshold: {t:.10f} s/byte")
+            else:
+                print("N/A (no compression benefit)")
+        
+        elif choice == "6":
+            try:
+                size = int(input("Enter array size: "))
+                min_val = int(input("Enter min value: "))
+                max_val = int(input("Enter max value: "))
+                arr = [random.randint(min_val, max_val) for _ in range(size)]
+                print(f"Generated array: {arr[:10]}... (showing first 10)")
+            except ValueError:
+                print("Invalid input.")
+        
+        elif choice == "7":
+            print("Available versions:")
+            for key in version_types:
+                print(f"{key}. {version_types[key]}")
+            selected = input("Select version (1-3): ").strip()
+            if selected in version_types:
+                current_type = version_types[selected]
+                bp = BitPackingFactory().create(current_type)
+                print(f"Switched to {current_type}")
+                # Reset data on switch
+                compressed = None
+                output = None
+            else:
+                print("Invalid choice.")
+        
+        elif choice == "8":
+            print("Exiting...")
+            sys.exit(0)
+        
+        else:
+            print("Invalid choice. Try again.")
 
 if __name__ == "__main__":
-    b1 = BitPacking.create("Version1")
-    maximum = 0
-    minimum = -10000
-    size = 100000
-    array = generate_input(size, minimum, maximum)
-    array = [99999999, 4, 29, 61999999, 44444444, 2, 65] + array
-    arrayDec = [0]*len(array)
-    comp = b1.compress(array)
-    decomp = b1.decompress(arrayDec)
-    #print(array)
-    #print(comp)
-    #print(decomp)
-    print(array==decomp)
-    print(b1.getCompressionTime())
-
-
-
-    """
-    b1 = BitPacking().create("Version1")
-    b1 = BitPacking().create("Version2")
-    max = 10000 
-    size = 10
-    array = generate_input(size, max)
-    arrayDec = [0]*size
-
-    
-    comp_array1, decomp_array1, avg_comp_time1, avg_decomp_time1 = run_with_averaging(b1, array)
-    comp_array2, decomp_array2, avg_comp_time2, avg_decomp_time2 = run_with_averaging(b1, array)
-
-
-    print(f"Version 1 - Average Compression Time: {avg_comp_time1:.4f} ms, Average Decompression Time: {avg_decomp_time1:.4f} ms")
-    print(f"Version 2 - Average Compression Time: {avg_comp_time2:.4f} ms, Average Decompression Time: {avg_decomp_time2:.4f} ms")
-    t1 = b1.calculate_latency_threshold()
-    if t1 is not None:
-        print(f"Version1 Latency Threshold t: {t1:.10f} seconds/byte")
-        print(f"  (Compression worthwhile if transmission latency per byte > {t1:.10f} s/byte)")
-    else:
-        print("Version1: Compression does not reduce size.")
-
-    t2 = b1.calculate_latency_threshold()
-    if t2 is not None:
-        print(f"Version2 Latency Threshold t: {t2:.10f} seconds/byte")
-        print(f"  (Compression worthwhile if transmission latency per byte > {t2:.10f} s/byte)")
-    else:
-        print("Version2: Compression does not reduce size.")
-
-    print("Are they equal? " + str(decomp_array1 == array and decomp_array2 == array))
-    """
+    main()

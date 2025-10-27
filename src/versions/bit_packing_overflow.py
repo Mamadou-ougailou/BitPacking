@@ -1,19 +1,15 @@
 import math
 import time
-
-class BitPackingOverflow:
+from src.bit_packer import BitPacker
+    
+class BitPackingOverflow(BitPacker):
     def __init__(self):
-        self.n = 0
-        self.k = 0
+        super().__init__()
         self.k_prime = 0
         self.m = 0
         self.p = 0
         self.dim = 0
         self.w = 0
-        self.compressionTime = "0.0000"
-        self.decompressionTime = "0.0000"
-        self.accessTime = "0.0000"
-        self.compressed = []
 
     def compress(self, arr):
         start_time = time.perf_counter()
@@ -21,6 +17,8 @@ class BitPackingOverflow:
             self.n = len(arr)
             max_val = max(abs(v) for v in arr)
             self.k = max(1, math.ceil(math.log2(max_val + 1)) + 1)
+            if self.k > 32:
+                raise ValueError("Bit width k > 32 not supported")
             best_total = self.n * self.k
             best_k_prime = self.k
             best_m = 0
@@ -198,28 +196,3 @@ class BitPackingOverflow:
         else:
             self.accessTime = "0.0000"
             raise IndexError("Index out of bounds")
-
-    def getCompressionTime(self):
-        return self.compressionTime
-
-    def getDecompressionTime(self):
-        return self.decompressionTime
-
-    def getAccessTime(self):
-        return self.accessTime
-    
-    def calculate_latency_threshold(self):
-        if self.n == 0 or self.k == 0:
-            return None
-        
-        S_u = self.n * 4  # bytes, uncompressed
-        S_c = len(self.compressed) * 4  # bytes, compressed
-        if S_c >= S_u:
-            return None  # Compression not beneficial
-        
-        # Convert times from ms strings to seconds floats
-        time_c = float(self.compressionTime) / 1000
-        time_d = float(self.decompressionTime) / 1000
-        
-        t_threshold = (time_c + time_d) / (S_u - S_c)
-        return t_threshold
