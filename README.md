@@ -62,3 +62,5 @@ NumPy Manquant : Optionnel ; sautez optimisations.
 
 Pour questions, consultez le rapport ou UML.
 ![alt text](uml.png)
+
+## Auteur: Mamadou Ougailou Diallo
